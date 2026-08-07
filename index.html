@@ -38,7 +38,6 @@
       overflow: hidden;
     }
 
-    /* DM 圖片展示區域 */
     .dm-image {
       width: 100%;
       height: auto;
@@ -62,7 +61,6 @@
       font-size: 0.95rem;
     }
 
-    /* 重要取貨提示 */
     .alert-box {
       background-color: #fde8e8;
       border-left: 5px solid #e74c3c;
@@ -87,7 +85,6 @@
       gap: 8px;
     }
 
-    /* DM 展示卡片 */
     .dm-gallery {
       padding: 0 25px;
       margin-bottom: 20px;
@@ -101,7 +98,6 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.04);
     }
 
-    /* 商品列表 */
     .product-card {
       display: flex;
       flex-wrap: wrap;
@@ -156,7 +152,6 @@
       font-size: 1rem;
     }
 
-    /* 費用試算 */
     .summary-box {
       background-color: #fdfefe;
       border: 2px dashed var(--accent-color);
@@ -189,7 +184,6 @@
       font-size: 0.8rem;
     }
 
-    /* 表單欄位 */
     .form-group {
       margin-bottom: 15px;
     }
@@ -218,7 +212,6 @@
       border-color: var(--secondary-color);
     }
 
-    /* 門市與匯款資訊 */
     .info-card {
       background-color: #f9f9f9;
       padding: 15px;
@@ -245,7 +238,11 @@
       background-color: #a93226;
     }
 
-    /* 彈窗 Modal */
+    .btn-submit:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+
     .modal {
       display: none;
       position: fixed;
@@ -290,7 +287,7 @@
 <body>
 
 <div class="container">
-  <!-- 第一張 DM：主宣傳海報 -->
+  <!-- 第一張 DM -->
   <div class="dm-card">
     <img src="S__35430468_0_2.jpg" alt="2026 愛你咖啡 中秋禮盒宣傳海報" class="dm-image">
   </div>
@@ -300,13 +297,13 @@
     <p>今年中秋，送出的不只是一份禮盒，更是一份陪伴孩子成長的力量。❤️</p>
   </div>
 
-  <!-- 重要須知提醒 -->
+  <!-- 重要取貨須知 -->
   <div class="alert-box">
     🚫 <strong>【重要取貨須知】</strong><br>
     本中秋禮盒<strong>僅提供「門市現場自取」，不提供郵寄或宅配服務</strong>。訂購時請確認可於指定日期至臺北市文山區門市領取。
   </div>
 
-  <!-- 第二張 DM：產品與訂購資訊海報 -->
+  <!-- 第二張 DM -->
   <div class="dm-gallery">
     <div class="dm-card">
       <img src="S__35430469_0_2.jpg" alt="2026 愛你咖啡 中秋禮盒訂購須知與菜單" class="dm-image">
@@ -314,7 +311,7 @@
   </div>
 
   <form id="orderForm">
-    <!-- 選擇商品與數量 -->
+    <!-- 1. 禮盒選擇 -->
     <div class="section">
       <div class="section-title">🎁 1. 選擇禮盒與數量</div>
 
@@ -354,7 +351,7 @@
         </div>
       </div>
 
-      <!-- 自動試算卡片 -->
+      <!-- 費用試算 -->
       <div class="summary-box">
         <div class="summary-row">
           <span>商品小計：</span>
@@ -371,7 +368,7 @@
       </div>
     </div>
 
-    <!-- 訂購人與自取資訊 -->
+    <!-- 2. 訂購人資料 -->
     <div class="section">
       <div class="section-title">👤 2. 訂購人與取貨資訊</div>
 
@@ -409,7 +406,7 @@
       </div>
     </div>
 
-    <!-- 匯款與門市地點 -->
+    <!-- 3. 匯款資訊與門市 -->
     <div class="section">
       <div class="section-title">💳 3. 匯款資訊與門市自取地點</div>
       <div class="info-card">
@@ -424,12 +421,12 @@
         • 訂購專線：0912-359-283 許先生
       </div>
 
-      <button type="submit" class="btn-submit">確認送出預購訂單</button>
+      <button type="submit" class="btn-submit" id="submitBtn">確認送出預購訂單</button>
     </div>
   </form>
 </div>
 
-<!-- 送出成功 Modal 彈窗 -->
+<!-- Modal 彈窗 -->
 <div class="modal" id="orderModal">
   <div class="modal-content">
     <div class="modal-header">🎉 預購訂單建立成功</div>
@@ -439,11 +436,15 @@
 </div>
 
 <script>
+  // Google Apps Script 串接網址
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQLQPIObQwYg678iA8LmaAY8OCIwT6cJsreumH5pBrp4lAqnyMK_uSj1aaZxWPbK1b4A/exec';
+
   const qtyInputs = document.querySelectorAll('.qty-input');
   const subtotalEl = document.getElementById('subtotal');
   const discountEl = document.getElementById('discount');
   const discountRow = document.getElementById('discountRow');
   const finalTotalEl = document.getElementById('finalTotal');
+  const submitBtn = document.getElementById('submitBtn');
 
   // 計算金額與折扣
   function calculateTotal() {
@@ -455,7 +456,6 @@
     });
 
     let discount = 0;
-    // 滿 5000 享 95 折 (扣 5%)
     if (subtotal >= 5000) {
       discount = Math.round(subtotal * 0.05);
       discountRow.style.display = 'flex';
@@ -474,49 +474,86 @@
     input.addEventListener('input', calculateTotal);
   });
 
-  // 表單送出處理
+  // 表單送出至 Google Apps Script
   document.getElementById('orderForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    let totalQty = 0;
-    let itemsSummary = '';
-
-    qtyInputs.forEach(input => {
-      const qty = parseInt(input.value) || 0;
-      if (qty > 0) {
-        totalQty += qty;
-        itemsSummary += `• ${input.dataset.name} x ${qty}<br>`;
-      }
-    });
+    const p1Qty = parseInt(document.getElementById('p1').value) || 0;
+    const p2Qty = parseInt(document.getElementById('p2').value) || 0;
+    const p3Qty = parseInt(document.getElementById('p3').value) || 0;
+    const totalQty = p1Qty + p2Qty + p3Qty;
 
     if (totalQty === 0) {
       alert('請至少選擇一種禮盒與數量！');
       return;
     }
 
-    const name = document.getElementById('custName').value;
-    const phone = document.getElementById('custPhone').value;
-    const date = document.getElementById('pickupDate').value;
-    const bankLast5 = document.getElementById('bankLast5').value;
-    const finalAmount = finalTotalEl.innerText;
+    const payload = {
+      custName: document.getElementById('custName').value,
+      custPhone: document.getElementById('custPhone').value,
+      pickupDate: document.getElementById('pickupDate').value,
+      bankLast5: document.getElementById('bankLast5').value,
+      p1Qty: p1Qty,
+      p2Qty: p2Qty,
+      p3Qty: p3Qty,
+      finalTotal: finalTotalEl.innerText,
+      note: document.getElementById('note').value
+    };
+
+    // 鎖定按鈕防止重複點擊
+    submitBtn.disabled = true;
+    submitBtn.innerText = '訂單處理中，請稍候...';
+
+    // 發送 POST 請求至 Apps Script
+    fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+      submitBtn.disabled = false;
+      submitBtn.innerText = '確認送出預購訂單';
+
+      if (data.result === 'success') {
+        showSuccessModal(payload);
+        document.getElementById('orderForm').reset();
+        calculateTotal();
+      } else {
+        alert('訂單建立失敗，請稍後再試或致電專線詢問。');
+      }
+    })
+    .catch(err => {
+      console.error('Error:', err);
+      submitBtn.disabled = false;
+      submitBtn.innerText = '確認送出預購訂單';
+      alert('資料傳送時發生異常，請檢查網路連線或稍後再試。');
+    });
+  });
+
+  function showSuccessModal(payload) {
+    let itemsSummary = '';
+    if (payload.p1Qty > 0) itemsSummary += `• 月圓心暖禮盒（9入） x ${payload.p1Qty}<br>`;
+    if (payload.p2Qty > 0) itemsSummary += `• 陽光陪伴禮盒（6入） x ${payload.p2Qty}<br>`;
+    if (payload.p3Qty > 0) itemsSummary += `• 陽光陪伴禮盒（12入） x ${payload.p3Qty}<br>`;
 
     const modalDetails = document.getElementById('modalDetails');
     modalDetails.innerHTML = `
-      <strong>訂購人：</strong>${name}<br>
-      <strong>電話：</strong>${phone}<br>
-      <strong>預計自取日期：</strong>${date}<br>
-      <strong>帳號後五碼：</strong>${bankLast5}<br>
+      <strong>訂購人：</strong>${payload.custName}<br>
+      <strong>電話：</strong>${payload.custPhone}<br>
+      <strong>預計自取日期：</strong>${payload.pickupDate}<br>
+      <strong>帳號後五碼：</strong>${payload.bankLast5}<br>
       <hr style="margin: 10px 0;">
       <strong>訂購品項：</strong><br>${itemsSummary}
       <hr style="margin: 10px 0;">
-      <strong>實付總金額：</strong><span style="color:#c0392b; font-weight:bold; font-size:1.2rem;">NT$ ${finalAmount}</span><br><br>
+      <strong>實付總金額：</strong><span style="color:#c0392b; font-weight:bold; font-size:1.2rem;">NT$ ${payload.finalTotal}</span><br><br>
       <div style="background:#fff3cd; padding:10px; border-radius:6px; font-size:0.85rem; color:#856404;">
-        感謝您的支持！請於轉帳後告知帳號資訊，並於預約自取當日前往愛你咖啡門市領取。
+        感謝您的支持！訂單已成功寫入系統，請於轉帳後告知帳號資訊，並於預約自取當日前往愛你咖啡門市領取。
       </div>
     `;
 
     document.getElementById('orderModal').style.display = 'flex';
-  });
+  }
 
   function closeModal() {
     document.getElementById('orderModal').style.display = 'none';
